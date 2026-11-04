@@ -1,0 +1,44 @@
+name: test
+
+# Installs and tests the formula from this checkout on macOS and Linux.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  formula:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+      HOMEBREW_NO_INSTALL_FROM_API: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Put Homebrew on the path
+        if: runner.os == 'Linux'
+        run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
+      - name: Tap this checkout
+        run: |
+          taps="$(brew --repository)/Library/Taps/modulestf"
+          mkdir -p "$taps"
+          ln -s "$GITHUB_WORKSPACE" "$taps/homebrew-tap"
+      - run: brew style modulestf/tap/mtf-facts
+      - run: brew install modulestf/tap/mtf-facts
+      - run: brew test modulestf/tap/mtf-facts
+      - run: brew audit --strict modulestf/tap/mtf-facts
