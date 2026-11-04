@@ -26,17 +26,9 @@ jobs:
     env:
       HOMEBREW_NO_AUTO_UPDATE: '1'
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Put Homebrew on the path
-        if: runner.os == 'Linux'
-        run: echo /home/linuxbrew/.linuxbrew/bin >> "$GITHUB_PATH"
-      - name: Tap this checkout
-        run: |
-          taps="$(brew --repository)/Library/Taps/modulestf"
-          mkdir -p "$taps"
-          ln -s "$GITHUB_WORKSPACE" "$taps/homebrew-tap"
+      # Sets up brew and taps this repository as modulestf/tap. It checks the
+      # repository out itself.
+      - uses: Homebrew/actions/setup-homebrew@55301c8cac0982bc2fbeb71275fa0b71b963bdb1 # main 2026-11-04
       - run: brew style modulestf/tap/mtf-facts
       - run: brew install modulestf/tap/mtf-facts
       - run: brew test modulestf/tap/mtf-facts
